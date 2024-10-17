@@ -1,119 +1,94 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 12 00:19:41 2022
-
-@author: ALFASTREK
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 11 23:18:50 2022
-
-@author: ALFASTREK
-"""
+import streamlit as st
 import random
-print('Welcome to the Rock Paper scissor App!')
-req1=int(input('How many round would you like to play:')) 
-#total number of attempts
-game=['rock','scissor','paper'] 
-#giving 3 choices to user
-userscore=0 #to maintain user's score
-compscore=0 #to maintain computer's score
-sr=0 #to denite a serial no. to every round of the game
-def real1(a,b): 
-    #case1 where user is supposed to win over computer
-    print ('Player:',a)
-    print('Computer:',b)
-    print(a,'wins over', b)
-    global userscore
-    global compscore
-    
-    userscore+=1
-    
-    print('PLAYER:',userscore,
-              'COMPUTER:',compscore,
-              '\nUser wins the round!\n')
-def real2(c,d): 
-    #case1 where comp is supposed to win over user
-    print ('Player:',c)
-    print('Computer:',d)
-    print(d,'wins over', c)
-    global userscore
-    global compscore
-    compscore+=1
-    print('PLAYER:',userscore,
-              'COMPUTER:',compscore,
-              '\nComputer wins the round!\n')
-    
-     
-def draw(a): 
-    #case 3 where its a draw
-    print ('Player:',a)
-    print('Computer:',a)
-    print("It's a Draw, how boring!, better luck next time tho.")
-    print('PLAYER:',userscore,
-              'COMPUTER:',compscore,'\n')
-    
-        
-for i in range(req1):
-    comp= random.choice(game)
-    sr+=1
-    print(sr,')''The computer has choosen its pick!')
-    user=input('Time to pick:')
-    #now to write code for different cases possible
-    if (user=='rock' and comp=='scissor'): 
-        real1('rock','scissor')
-    elif(user=='scissor' and comp=='rock'):
-        real2('scissor','rock')
-    elif (user=='paper' and comp=='rock'):
-        real1('paper','rock')
-    elif(user=='rock' and comp=='paper'):
-        real2('rock','paper')
-    elif (user=='scissor' and comp=='paper'):
-        real1('scissor','paper')
-    elif(user=='paper' and comp=='scissor'):
-        real2('paper','scissor')
-    elif(user==comp):
-        draw(user)
-    else:
-        print('wrong input')
-        break
 
-def winner (a,b): #to declare the final winner
-    if (a>b):
-        print('User wins!')
-    elif (b>a):
-        print('Computer wins!')
-    elif (a==b):
-        print("IT'S A DRAW !")
-    else:
-        pass
-    return ('GAME OVER')
-    
-    
-print("Final Game results:" #to display final result
-      "\t\tRounds Played:",req1,
-      '\t\tPlayer Score:',userscore,
-      '\t\tComputer Score:',compscore,
-       winner('userscore','compscore'))
+# Initialize session state variables
+if "round_number" not in st.session_state:
+    st.session_state.round_number = 1
+    st.session_state.user_score = 0
+    st.session_state.comp_score = 0
+    st.session_state.num_rounds = 0
+    st.session_state.game_started = False
+    st.session_state.result_message = ""
+    st.session_state.comp_choice = ""
 
-      
-    
-    
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+# Function to get the computer's choice
+def get_computer_choice():
+    return random.choice(['rock', 'paper', 'scissor'])
+
+# Function to determine the winner
+def determine_winner(user, comp):
+    if user == comp:
+        return "It's a Draw! How boring! Better luck next time.", 0
+    elif (user == 'rock' and comp == 'scissor') or \
+         (user == 'scissor' and comp == 'paper') or \
+         (user == 'paper' and comp == 'rock'):
+        return f"{user.capitalize()} wins over {comp}!", 1  # User wins
+    else:
+        return f"{comp.capitalize()} wins over {user}!", -1  # Computer wins
+
+# User input for the number of rounds
+if not st.session_state.game_started:
+    st.title("Welcome to the Rock-Paper-Scissors App!")
+    st.session_state.num_rounds = st.number_input(
+        "How many rounds would you like to play?", 
+        min_value=1, max_value=10, step=1
+    )
+    if st.button("Start Game"):
+        st.session_state.game_started = True
+
+# Main game logic
+if st.session_state.game_started and st.session_state.round_number <= st.session_state.num_rounds:
+    st.subheader(f"Round {st.session_state.round_number}")
+
+    # User selects their move
+    user_choice = st.selectbox(
+        "Pick your move:", 
+        ["rock", "paper", "scissor"], 
+        key=f"user_choice_{st.session_state.round_number}"
+    )
+
+    # When the user clicks "Submit", play the round
+    if st.button("Submit"):
+        st.session_state.comp_choice = get_computer_choice()
+        result_message, result = determine_winner(user_choice, st.session_state.comp_choice)
+
+        # Update scores
+        if result == 1:
+            st.session_state.user_score += 1
+        elif result == -1:
+            st.session_state.comp_score += 1
+
+        st.session_state.result_message = result_message
+        st.session_state.round_number += 1
+
+# Display the result of the current round
+if st.session_state.result_message:
+    st.write(f"Player: {user_choice}")
+    st.write(f"Computer: {st.session_state.comp_choice}")
+    st.write(st.session_state.result_message)
+    st.write(f"Current Score -> PLAYER: {st.session_state.user_score} COMPUTER: {st.session_state.comp_score}")
+
+# Display the final results when all rounds are completed
+if st.session_state.round_number > st.session_state.num_rounds:
+    st.write("## Final Game Results:")
+    st.write(f"Rounds Played: {st.session_state.num_rounds}")
+    st.write(f"Player Score: {st.session_state.user_score}")
+    st.write(f"Computer Score: {st.session_state.comp_score}")
+
+    if st.session_state.user_score > st.session_state.comp_score:
+        st.success('User wins the game!')
+    elif st.session_state.user_score < st.session_state.comp_score:
+        st.error('Computer wins the game!')
+    else:
+        st.info("It's a draw!")
+
+    st.balloons()  # Display balloons animation for the end of the game
+
+    # Reset the game state to allow replay
+    if st.button("Play Again"):
+        st.session_state.round_number = 1
+        st.session_state.user_score = 0
+        st.session_state.comp_score = 0
+        st.session_state.game_started = False
+        st.session_state.result_message = ""
+        st.session_state.comp_choice = ""
